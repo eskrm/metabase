@@ -45,15 +45,19 @@ function SortStep({
           <span>{sort.dimension().displayName()}</span>
         </span>
       )}
-      renderPopover={(sort, index) => (
+      renderPopover={({ item: sort, index, closePopover }) => (
         <SortPopover
           query={query}
           sort={sort}
-          onChangeSort={newSort =>
-            sort && typeof index === "number"
-              ? updateQuery(query.updateSort(index, newSort))
-              : updateQuery(query.sort(newSort))
-          }
+          onChangeSort={newSort => {
+            const isUpdate = sort && typeof index === "number";
+            if (isUpdate) {
+              updateQuery(query.updateSort(index, newSort));
+            } else {
+              updateQuery(query.sort(newSort));
+            }
+            closePopover();
+          }}
         />
       )}
       isLastOpened={isLastOpened}
