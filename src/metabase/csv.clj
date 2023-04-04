@@ -4,9 +4,20 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [flatland.ordered.map :as ordered-map]
+   [metabase.driver :as driver]
+   [metabase.models :refer [Database Table]]
+   [metabase.models.setting :as setting]
    [metabase.search.util :as search-util]
+   [metabase.sync :as sync]
+   [metabase.sync.field-values :as field-values]
    [metabase.util :as u]
-   [metabase.util.i18n :refer [trs]]))
+   [metabase.util.i18n :refer [trs]]
+   [toucan2.core :as t2]
+   [metabase.driver.util :as driver.u]))
+
+;;;; +------------------+
+;;;; | Schema detection |
+;;;; +------------------+
 
 ;;           text
 ;;            |
@@ -98,3 +109,36 @@
   (with-open [reader (io/reader csv-file)]
     (let [[header & rows] (csv/read-csv reader)]
       (rows->schema header rows))))
+
+;;;; +-----------------+
+;;;; | Main Entrypoint |
+;;;; +-----------------+
+
+(defn- value-or-throw!
+  [value message]
+  (let [test-fn (if (string? value) str/blank? nil?)]
+    (if (test-fn value)
+      (throw (Exception. message))
+      value)))
+
+(defn- get-setting-or-throw!
+  [setting-name]
+  (value-or-throw! (setting/get setting-name)
+                   (trs "You must set the `{0}` before uploading files." (name setting-name))))
+
+(defn load!
+  "Main entry point for CSV uploading. Coordinates detecting the schema, inserting it into an appropriate database,
+  syncing and scanning the new data, and creating an appropriate model. May throw validation or DB errors."
+  [csv-file]
+  (when (not (setting/get :uploads-enabled))
+    (throw (Exception. "Uploads are not enabled.")))
+  (let [db-id         (get-setting-or-throw! :uploads-database-id)
+        database      (when db-id (t2/select-one Database :id db-id))
+        schema-name   (get-setting-or-throw! :uploads-schema-name)
+        _table-prefix (get-setting-or-throw! :uploads-table-prefix)
+        driver        (value-or-throw! (#{:postgres :mysql :h2} (driver.u/database->driver database))
+                                       (trs "The database ID for uploads must correspond to a Postgres, MySQL, or H2 database."))
+        table-name    (driver/load-from-csv driver database schema-name csv-file)
+        new-table     (value-or-throw! (t2/select-one Table :db_id db-id :name table-name)
+                                       (trs "Error creating the new table."))]
+    (sync/sync-table! new-table)))

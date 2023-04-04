@@ -35,6 +35,7 @@
    [metabase.util.i18n :refer [trs tru]]
    [metabase.util.log :as log])
   (:import
+   (java.io File)
    (java.sql ResultSet ResultSetMetaData Time Types)
    (java.time LocalDateTime OffsetDateTime OffsetTime)
    (java.util Date UUID)))
@@ -773,12 +774,12 @@
    ::csv/boolean     "BOOLEAN"})
 
 (defmethod driver/load-from-csv :postgres
-  [driver db-id schema-name table-name file-name]
-  (let [col->type   (update-vals (csv/detect-schema file-name) csv->database-type)
+  [driver db-id schema-name file]
+  (let [col->type   (update-vals (csv/detect-schema file) csv->database-type)
         cols        (keys col->type)
-        table-name  (str table-name (t/format "_yyyyMMddHHmmss" (t/local-date-time)))]
+        table-name  (str (.getName ^File file) (t/format "_yyyyMMddHHmmss" (t/local-date-time)))]
     (driver/create-table driver db-id schema-name table-name col->type)
-    (let [sql           (load-from-csv-sql schema-name table-name cols file-name)
+    (let [sql           (load-from-csv-sql schema-name table-name cols (str file))
           upload-result (try
                           (qp.writeback/execute-write-sql! db-id sql)
                           (catch Throwable e

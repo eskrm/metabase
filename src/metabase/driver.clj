@@ -833,6 +833,6 @@
 (defmulti load-from-csv
   "Loads a table from a CSV file. If the table already exists, it will fail. Returns the name of the newly created
    table."
-  {:added "0.47.0", :arglists '([driver database schema-name table-name file-name])}
+  {:added "0.47.0", :arglists '([driver database schema-name file-name])}
   dispatch-on-initialized-driver
   :hierarchy #'hierarchy)
