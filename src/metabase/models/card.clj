@@ -30,14 +30,12 @@
 
 (set! *warn-on-reflection* true)
 
+(methodical/defmethod t2/table-name :m/Card [_model] :report_card)
+
 (def Card
   "Used to be the toucan1 model name defined using [[toucan.models/defmodel]], not it's a reference to the toucan2 model name.
   We'll keep this till we replace all the Card symbol in our codebase."
-  :m/Card)
-
-#_(defmethod mi/name->toucan-model "Card" [_model-name] :m/Card)
-
-(methodical/defmethod t2/table-name :m/Card [_model] :report_card)
+ :m/Card)
 
 (methodical/defmethod t2.hydrate/model-for-automagic-hydration [#_model :default #_k :card]
   [_original-model _k]
