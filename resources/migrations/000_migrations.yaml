@@ -14378,6 +14378,77 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
+  - changeSet:
+      id: v47.00-006
+      author: qnkhuat
+      comment: Added 0.47.0 - Add report_dashboardtab table
+      changes:
+        - createTable:
+            tableName: report_dashboardtab
+            columns:
+                - column:
+                    name: id
+                    type: int
+                    autoIncrement: true
+                    constraints:
+                      primaryKey: true
+                      nullable: false
+                - column:
+                    name: dashboard_id
+                    type: int
+                    constraints:
+                      nullable: false
+                      deleteCaforeignKeyNamescade: true
+                      referencedTableName: report_dashboard
+                      referencedColumnNames: id
+                      foreignKeyName: fk_dashboardtab_ref_dashboard_id
+                - column:
+                    name: name
+                    type: text
+                    constraints:
+                      nullable: false
+                - column:
+                    name: position
+                    remarks: the position of the tab within a dashboard
+                    type: int
+                    constraints:
+                      nullable: false
+                - column:
+                    remarks: Random NanoID tag for unique identity.
+                    name: entity_id
+                    type: char(21)
+                    constraints:
+                      nullable: false
+                      unique: true
+                - column:
+                    name: created_at
+                    type: ${timestamp_type}
+                    defaultValueComputed: current_timestamp
+                    constraints:
+                      nullable: false
+                - column:
+                    name: updated_at
+                    type: ${timestamp_type}
+                    defaultValueComputed: current_timestamp
+                    constraints:
+                      nullable: false
+  - changeSet:
+      id: v47.00-007
+      author: qnkhuat
+      comment: Added 0.47.0 -- add report_dashboardcard.dashboardtab_id
+      changes:
+      - addColumn:
+          tableName: report_dashboardcard
+          columns:
+              - column:
+                  name: dashboardtab_id
+                  type: int
+                  constraints:
+                    nullable: true
+                    referencedTableName: report_dashboardtab
+                    referencedColumnNames: id
+                    foreignKeyName: fk_report_dashboardcard_ref_dashboardtab_id
+                    deleteCascade: true
 
 # >>>>>>>>>> DO NOT ADD NEW MIGRATIONS BELOW THIS LINE! ADD THEM ABOVE <<<<<<<<<<
 
