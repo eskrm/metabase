@@ -352,6 +352,7 @@ class NativeQueryEditor extends Component {
           }));
           callback(null, resultsForAce);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.log("error getting autocompletion data", error);
           callback(null, []);
         }
